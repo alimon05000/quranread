@@ -1,260 +1,219 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Quran Premium Mushaf</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        @font-face {
-            font-family: 'Uthmanic';
-            src: url('https://cdn.rawgit.com/alif-type/quran-fonts/master/fonts/uthmanic_haf1_v20.ttf');
-        }
-
         :root {
-            --bg: #0a0a0a;
+            --bg: #080808;
             --gold: #c5a059;
+            --text: #e0e0e0;
             --paper: #dcd3bd;
-            --glass: rgba(20, 20, 20, 0.8);
-            --border: rgba(197, 160, 89, 0.3);
+            --glass: rgba(15, 15, 15, 0.9);
         }
 
-        body, html {
-            margin: 0; padding: 0;
-            background: var(--bg);
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
+        body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font-family: 'Inter', sans-serif; overflow-x: hidden;
+            -webkit-user-select: none;
         }
 
-        /* --- Главное Меню --- */
-        .surah-list {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
+        /* --- Главный Экран --- */
+        .menu { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .surah-item {
+            background: #121212; padding: 20px; border-radius: 12px;
+            margin-bottom: 10px; display: flex; justify-content: space-between;
+            align-items: center; border: 1px solid #1a1a1a; cursor: pointer;
         }
-        .surah-card {
-            background: #151515;
-            padding: 18px;
-            margin-bottom: 10px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            border: 1px solid #222;
-            cursor: pointer;
-        }
+        .surah-item:active { transform: scale(0.98); background: #1a1a1a; }
 
-        /* --- Режим Чтения --- */
+        /* --- Ридер --- */
         #reader {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            overflow-y: auto;
-            transition: 0.3s;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 1000; overflow-y: auto; scroll-behavior: smooth;
         }
 
-        .mushaf-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px 150px;
-            text-align: center;
+        .mushaf-page {
+            max-width: 800px; margin: 0 auto; padding: 40px 20px 180px;
+            text-align: center; direction: rtl;
         }
 
-        /* Тот самый шрифт как в книге */
+        /* Каллиграфический шрифт */
         .quran-text {
-            font-family: 'Uthmanic', 'Amiri', serif;
-            direction: rtl;
-            line-height: 2.2;
-            font-size: 28px; /* По умолчанию */
-            color: #fff;
-            word-spacing: 4px;
-            text-align: center;
+            font-family: 'Scheherazade New', serif;
+            font-size: 32px; line-height: 2.2; color: #fff;
+            text-align: justify; text-align-last: center;
+            word-spacing: 2px;
         }
 
-        .mushaf-only .translation, 
-        .mushaf-only .actions,
-        .mushaf-only .note-area { display: none !important; }
+        /* Номер аята (кружок) */
+        .ayah-end {
+            color: var(--gold); font-family: 'Inter'; font-size: 1.2rem;
+            margin: 0 5px; position: relative; display: inline-block;
+        }
 
+        /* Тасмия (Бисмилля) */
+        .bismillah {
+            font-family: 'Scheherazade New', serif;
+            font-size: 2.5rem; color: var(--gold);
+            margin: 40px 0; display: block; text-align: center;
+        }
+
+        /* Элементы управления (Стиль Apple) */
+        .ui-overlay {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--glass); backdrop-filter: blur(20px);
+            padding: 12px 30px; border-radius: 40px; display: flex; gap: 30px;
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+        }
+        .ui-overlay.hidden { bottom: -100px; opacity: 0; }
+
+        .btn-premium {
+            background: none; border: none; color: var(--gold);
+            font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;
+            cursor: pointer; text-transform: uppercase;
+        }
+
+        .font-panel {
+            position: fixed; top: 20px; right: 20px; background: var(--glass);
+            padding: 15px; border-radius: 20px; border: 1px solid var(--border);
+            z-index: 2000; transition: 0.5s;
+        }
+
+        /* Перевод и заметки (скрываются в режиме мусхафа) */
         .translation {
-            color: #888;
-            font-size: 0.95rem;
-            margin: 15px 0 30px;
-            line-height: 1.5;
+            direction: ltr; color: #777; font-size: 0.9rem;
+            margin: 10px 0 30px; text-align: left; font-family: 'Inter';
         }
 
-        /* --- Управление --- */
-        .ui-panel {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--border);
-            padding: 10px 25px;
-            border-radius: 50px;
-            display: flex;
-            gap: 25px;
-            z-index: 2000;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .note-input {
+            background: var(--paper); color: #332d22; width: 100%;
+            border-radius: 12px; padding: 15px; border: none;
+            margin: 10px 0; display: none; box-sizing: border-box;
         }
 
-        .ui-panel.hidden { bottom: -100px; opacity: 0; }
+        .mushaf-mode .translation, 
+        .mushaf-mode .action-btns, 
+        .mushaf-mode .note-input { display: none !important; }
 
-        .btn-ui {
-            background: none;
-            border: none;
-            color: var(--gold);
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .mushaf-mode .ayah-wrapper { border: none; padding: 0; margin: 0; display: inline; }
+        .mushaf-mode .quran-text { display: inline; }
 
-        /* Регулятор шрифта */
-        .font-ctrl {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--glass);
-            padding: 10px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--border);
-            z-index: 2000;
-        }
-
-        input[type=range] {
-            accent-color: var(--gold);
-            width: 100px;
-        }
-
-        /* Поле заметок */
-        .note-area {
-            background: var(--paper);
-            color: #332d22;
-            width: 100%;
-            border-radius: 12px;
-            padding: 15px;
-            border: none;
-            font-family: inherit;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .ayah-wrapper {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
     </style>
 </head>
-<body onclick="handleGlobalClick(event)">
+<body onclick="toggleUI(event)">
 
-<div id="menu" class="surah-list">
-    <h2 style="text-align:center; color:var(--gold); margin-bottom:30px;">QURAN PREMIERE</h2>
-    <div id="list"></div>
+<div id="menu-screen" class="menu">
+    <h1 style="text-align:center; color:var(--gold); font-weight:300; letter-spacing:5px;">MUSHAF</h1>
+    <div id="surah-list"></div>
 </div>
 
 <div id="reader">
-    <div class="font-ctrl" id="fontCtrl">
-        <label style="font-size: 10px; color: var(--gold); margin-bottom: 5px;">РАЗМЕР ШРИФТА</label>
-        <input type="range" min="20" max="50" value="28" oninput="changeFontSize(this.value)">
+    <div class="font-panel" id="fontPanel">
+        <input type="range" min="24" max="50" value="32" oninput="resizeFont(this.value)">
     </div>
 
-    <div class="mushaf-container" id="content">
+    <div class="mushaf-page" id="mushaf-content">
         </div>
 
-    <div class="ui-panel" id="uiPanel">
-        <button class="btn-ui" onclick="closeReader()">Закрыть</button>
-        <button class="btn-ui" onclick="toggleMushaf()">Режим</button>
+    <div class="ui-overlay" id="uiOverlay">
+        <button class="btn-premium" onclick="closeReader()">Закрыть</button>
+        <button class="btn-premium" onclick="toggleMushafMode()">Режим</button>
     </div>
 </div>
 
 <script>
-    let currentSurah = null;
-    let isPure = false;
-    let uiVisible = true;
+    let isMushaf = false;
+    let isUiVisible = true;
 
-    // Загрузка списка сур
-    async function init() {
+    // Загрузка сур
+    async function loadMenu() {
         const res = await fetch('https://api.alquran.cloud/v1/surah');
         const data = await res.json();
-        const list = document.getElementById('list');
+        const list = document.getElementById('surah-list');
         data.data.forEach(s => {
             list.innerHTML += `
-                <div class="surah-card" onclick="openSurah(${s.number}, '${s.englishName}')">
-                    <span>${s.number}. ${s.englishName}</span>
-                    <span style="color:var(--gold); font-family:'Amiri'">${s.name}</span>
+                <div class="surah-item" onclick="openSurah(${s.number}, '${s.englishName}')">
+                    <span style="color:var(--gold)">${s.number}</span>
+                    <span>${s.englishName}</span>
+                    <span style="font-family:'Scheherazade New'; font-size:1.5rem; color:var(--gold)">${s.name}</span>
                 </div>
             `;
         });
     }
 
     async function openSurah(id, name) {
-        document.getElementById('reader').style.display = 'block';
-        const target = document.getElementById('content');
-        target.innerHTML = '<p>Загрузка...</p>';
+        const reader = document.getElementById('reader');
+        const content = document.getElementById('mushaf-content');
+        reader.style.display = 'block';
+        content.innerHTML = '<div style="margin-top:50vh">Загрузка...</div>';
 
         const res = await fetch(`https://api.alquran.cloud/v1/surah/${id}/editions/quran-uthmani,ru.kuliev,ar.alafasy`);
         const json = await res.json();
         
-        target.innerHTML = `<h1 style="color:var(--gold); font-family:'Amiri'; margin-bottom:50px;">${json.data[0].name}</h1>`;
+        let html = `<div style="color:var(--gold); font-size:1.2rem; margin-bottom:20px;">${name}</div>`;
+        
+        // Бисмилля (кроме Таубы и Фатихи, т.к. в Фатихе она - первый аят)
+        if (id !== 9 && id !== 1) {
+            html += `<div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>`;
+        }
+
+        html += `<div class="quran-text">`;
         
         json.data[0].ayahs.forEach((ayah, i) => {
             const aNum = ayah.numberInSurah;
-            const note = localStorage.getItem(`n_${id}_${aNum}`) || '';
-            target.innerHTML += `
-                <div class="ayah-wrapper">
-                    <div class="quran-text" id="qtext-${i}">${ayah.text} <span style="color:var(--gold)">﴿${aNum}﴾</span></div>
+            const note = localStorage.getItem(`note_${id}_${aNum}`) || '';
+            
+            html += `
+                <div class="ayah-wrapper" id="ayah-${aNum}">
+                    ${ayah.text} <span class="ayah-end">﴿${aNum}﴾</span>
                     <div class="translation">${json.data[1].ayahs[i].text}</div>
-                    <div class="actions">
-                        <button class="btn-ui" style="font-size:10px" onclick="new Audio('${json.data[2].ayahs[i].audio}').play()">▶ Слушать</button>
-                        <button class="btn-ui" style="font-size:10px" onclick="document.getElementById('n-${aNum}').style.display='block'">📝 Заметка</button>
+                    <div class="action-btns" style="text-align:left; margin-bottom:20px;">
+                        <button class="btn-premium" style="font-size:10px" onclick="new Audio('${json.data[2].ayahs[i].audio}').play()">▶ Слушать</button>
+                        <button class="btn-premium" style="font-size:10px" onclick="showNote(${aNum})">📝 Заметка</button>
                     </div>
-                    <textarea id="n-${aNum}" class="note-area" onblur="saveNote(${id},${aNum},this.value)">${note}</textarea>
+                    <textarea id="n-${aNum}" class="note-input" onblur="saveNote(${id},${aNum},this.value)">${note}</textarea>
                 </div>
             `;
         });
-        currentSurah = id;
-    }
-
-    // Регулировка шрифта
-    function changeFontSize(val) {
-        const texts = document.querySelectorAll('.quran-text');
-        texts.forEach(t => t.style.fontSize = val + 'px');
-    }
-
-    // Скрытие интерфейса при клике
-    function handleGlobalClick(e) {
-        const panel = document.getElementById('uiPanel');
-        const fontCtrl = document.getElementById('fontCtrl');
         
-        // Если клик не по кнопкам и не по ползунку — скрываем/показываем UI
-        if (!e.target.closest('.ui-panel') && !e.target.closest('.font-ctrl') && !e.target.closest('.surah-card')) {
-            uiVisible = !uiVisible;
-            panel.classList.toggle('hidden', !uiVisible);
-            fontCtrl.style.display = uiVisible ? 'flex' : 'none';
-        }
+        html += `</div>`;
+        content.innerHTML = html;
+        if(isMushaf) document.getElementById('mushaf-content').classList.add('mushaf-mode');
     }
 
-    function toggleMushaf() {
-        isPure = !isPure;
-        document.getElementById('content').classList.toggle('mushaf-only', isPure);
+    function toggleUI(e) {
+        if (e.target.closest('.surah-item') || e.target.closest('.btn-premium') || e.target.closest('input')) return;
+        isUiVisible = !isUiVisible;
+        document.getElementById('uiOverlay').classList.toggle('hidden', !isUiVisible);
+        document.getElementById('fontPanel').style.opacity = isUiVisible ? '1' : '0';
     }
 
-    function saveNote(s, a, v) { localStorage.setItem(`n_${s}_${a}`, v); }
+    function toggleMushafMode() {
+        isMushaf = !isMushaf;
+        document.getElementById('mushaf-content').classList.toggle('mushaf-mode');
+    }
 
+    function resizeFont(v) {
+        document.querySelectorAll('.quran-text').forEach(t => t.style.fontSize = v + 'px');
+    }
+
+    function showNote(id) {
+        const el = document.getElementById(`n-${id}`);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveNote(s, a, v) { localStorage.setItem(`note_${s}_${a}`, v); }
+    
     function closeReader() {
         document.getElementById('reader').style.display = 'none';
-        uiVisible = true;
+        isUiVisible = true;
     }
 
-    init();
+    loadMenu();
 </script>
 </body>
 </html>
