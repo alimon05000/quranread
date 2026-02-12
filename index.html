@@ -1,967 +1,278 @@
 <!DOCTYPE html>
-<html lang="ru" dir="ltr">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="Premium Quran Audio Player">
-    <title>Quran PWA</title>
-
-    <script>
-        const manifest = {
-            "name": "Quran Premium",
-            "short_name": "QuranAudio",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#4F46E5",
-            "icons": [
-                {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='256' fill='%234F46E5'/%3E%3Cpath d='M256 100c-86 0-156 70-156 156s70 156 156 156 156-70 156-156-70-156-156-156zm0 280c-68 0-124-56-124-124s56-124 124-124 124 56 124 124-56 124-124 124z' fill='white'/%3E%3C/svg%3E",
-                    "sizes": "192x192",
-                    "type": "image/svg+xml"
-                },
-                {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='256' fill='%234F46E5'/%3E%3Cpath d='M256 100c-86 0-156 70-156 156s70 156 156 156 156-70 156-156-70-156-156-156zm0 280c-68 0-124-56-124-124s56-124 124-124 124 56 124 124-56 124-124 124z' fill='white'/%3E%3C/svg%3E",
-                    "sizes": "512x512",
-                    "type": "image/svg+xml"
-                }
-            ]
-        };
-        const stringManifest = JSON.stringify(manifest);
-        const blob = new Blob([stringManifest], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        document.write(`<link rel="manifest" href="${manifestURL}">`);
-    </script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Premium Quran Mushaf</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS VARIABLES & THEME --- */
         :root {
-            --primary: #4F46E5;
-            --primary-rgb: 79, 70, 229;
-            --secondary: #10B981;
-            --bg: #F3F4F6;
-            --surface: #FFFFFF;
-            --text-main: #111827;
-            --text-sec: #6B7280;
-            --border: #E5E7EB;
-            --glass: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
-            --radius-l: 24px;
-            --radius-m: 16px;
-            --radius-s: 12px;
-            --nav-height: 70px;
-            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --bg-night: #0f172a;
+            --bg-paper: #f4ede4; /* Цвет состаренной бумаги для режима книги */
+            --text-night: #f8fafc;
+            --text-paper: #2c2c2c;
+            --accent-gold: #c5a059;
+            --transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        [data-theme="dark"] {
-            --bg: #0F172A;
-            --surface: #1E293B;
-            --text-main: #F9FAFB;
-            --text-sec: #94A3B8;
-            --border: #334155;
-            --glass: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        /* --- RESET & BASE --- */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: var(--font-family);
-            background-color: var(--bg);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            transition: background-color 0.3s ease;
-        }
-        button { background: none; border: none; cursor: pointer; color: inherit; font-family: inherit; }
-        input { font-family: inherit; }
-        a { text-decoration: none; color: inherit; }
-        ul { list-style: none; }
-
-        /* --- LAYOUT --- */
-        #app {
-            display: flex;
-            height: 100%;
-            flex-direction: column;
-        }
-        
-        .main-container {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px;
-            padding-bottom: calc(var(--nav-height) + var(--safe-area-bottom) + 20px);
-            scroll-behavior: smooth;
+            margin: 0; padding: 0;
+            background-color: var(--bg-night);
+            color: var(--text-night);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.5s;
         }
 
-        /* Desktop Sidebar Layout */
-        @media (min-width: 768px) {
-            #app { flex-direction: row; }
-            .nav-bar {
-                width: 240px;
-                height: 100%;
-                flex-direction: column;
-                border-top: none;
-                border-right: 1px solid var(--border);
-                justify-content: flex-start;
-                padding-top: 40px;
-            }
-            .nav-item { flex-direction: row; gap: 12px; padding: 12px 20px; width: 100%; border-radius: var(--radius-m); }
-            .nav-item.active { background: rgba(var(--primary-rgb), 0.1); }
-            .nav-label { display: block !important; font-size: 16px; }
-            .main-container { padding-bottom: 20px; }
+        /* --- Контейнер списка сур --- */
+        .main-menu {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
         }
 
-        /* --- COMPONENTS --- */
-        
-        /* Typography */
-        h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
-        h1 { font-size: 28px; margin-bottom: 16px; }
-        
-        /* Glass Card */
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-l);
-            box-shadow: var(--shadow);
-        }
-
-        /* Buttons */
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius-m);
-            font-weight: 600;
-            transition: var(--transition);
-        }
-        .btn-primary:active { transform: scale(0.96); }
-        .btn-icon {
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: var(--transition);
-        }
-        .btn-icon:hover { background: rgba(var(--primary-rgb), 0.1); }
-        .btn-icon:active { transform: scale(0.9); }
-        
-        /* Search Input */
-        .search-bar {
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: var(--radius-m);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            margin-bottom: 24px;
-            font-size: 16px;
-            transition: var(--transition);
-        }
-        .search-bar:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
-
-        /* Reciter List */
-        .reciter-grid {
+        .surah-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
-        .reciter-card {
-            background: var(--surface);
-            padding: 16px;
-            border-radius: var(--radius-m);
-            text-align: center;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
-        .reciter-card:hover { transform: translateY(-4px); border-color: var(--primary); }
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #e0e7ff;
-            margin: 0 auto 12px;
+
+        .surah-item {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            color: var(--primary);
-        }
-        .badge {
-            position: absolute; top: 12px; right: 12px;
-            background: var(--primary); color: white;
-            font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;
-        }
-
-        /* Player Screen */
-        .player-container { text-align: center; padding: 20px; max-width: 500px; margin: 0 auto; }
-        .player-art {
-            width: 250px; height: 250px; margin: 0 auto 30px;
-            border-radius: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary));
-            box-shadow: 0 20px 40px -10px rgba(var(--primary-rgb), 0.5);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .player-art svg { width: 100px; height: 100px; color: rgba(255,255,255,0.8); }
-        .progress-container { margin-bottom: 20px; }
-        .progress-bar {
-            width: 100%; height: 6px; background: var(--border);
-            border-radius: 3px; cursor: pointer; position: relative; overflow: hidden;
-        }
-        .progress-fill { height: 100%; background: var(--primary); width: 0%; border-radius: 3px; }
-        .time-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sec); margin-top: 8px; }
-        
-        .controls-main { display: flex; align-items: center; justify-content: space-around; margin-bottom: 30px; }
-        .btn-play-large {
-            width: 80px; height: 80px; background: var(--primary); color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.4);
-        }
-        .controls-sec { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
-
-        /* Track List */
-        .track-list { margin-top: 20px; }
-        .track-item {
-            display: flex; align-items: center; padding: 12px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer; transition: background 0.2s;
-        }
-        .track-item:hover { background: rgba(var(--primary-rgb), 0.05); }
-        .track-item.active { color: var(--primary); font-weight: 600; }
-        .track-info { flex: 1; text-align: left; padding-left: 12px; }
-        
-        /* Navigation Bar (Mobile) */
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: calc(var(--nav-height) + var(--safe-area-bottom));
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--glass-border);
-            display: flex; justify-content: space-around;
-            padding-bottom: var(--safe-area-bottom);
-            z-index: 100;
-        }
-        .nav-item {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: var(--text-sec); opacity: 0.7;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
             transition: var(--transition);
         }
-        .nav-item.active { color: var(--primary); opacity: 1; }
-        .nav-icon { width: 24px; height: 24px; margin-bottom: 4px; }
-        .nav-label { font-size: 10px; font-weight: 500; }
 
-        /* Skeleton Loading */
-        .skeleton {
-            background: linear-gradient(90deg, var(--border) 25%, var(--surface) 50%, var(--border) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 4px;
+        .surah-item:hover {
+            border-color: var(--accent-gold);
+            transform: scale(1.02);
         }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* Toast */
-        .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: var(--text-main); color: var(--bg);
-            padding: 12px 24px; border-radius: 50px;
-            z-index: 1000; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-size: 14px;
+        /* --- Ридер (Mushaf Mode) --- */
+        #reader {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1000;
+            overflow-y: auto;
+            background: var(--bg-night);
         }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        /* Helpers */
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        /* Стиль "Чистая Книга" */
+        #reader.mushaf-view {
+            background-color: var(--bg-paper);
+            color: var(--text-paper);
         }
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
-        .modal {
-            background: var(--surface); width: 90%; max-width: 400px;
-            padding: 24px; border-radius: var(--radius-l);
-            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+        .reader-controls {
+            position: sticky;
+            top: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            z-index: 10;
         }
-        .modal-overlay.open .modal { transform: scale(1); }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
-        
-        /* Settings */
-        .settings-group { margin-bottom: 24px; background: var(--surface); padding: 16px; border-radius: var(--radius-m); border: 1px solid var(--border); }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-        .settings-row:last-child { border-bottom: none; }
-        select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-main); }
+
+        .content-wrapper {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Тот самый "Книжный" шрифт */
+        .quran-text {
+            font-family: 'Amiri', serif; /* В идеале подгрузить локальный KFGQPC */
+            direction: rtl;
+            font-size: 2.4rem;
+            line-height: 2.8;
+            word-spacing: 5px;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Режим 1:1 Мусхаф (сплошной текст) */
+        .mushaf-view .quran-text {
+            display: inline;
+            text-align: justify;
+        }
+
+        .mushaf-view .translation { display: none; }
+        .mushaf-view .ayah-actions { display: none; }
+
+        .ayah-num {
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            margin: 0 10px;
+            border: 1px solid var(--accent-gold);
+            border-radius: 50%;
+            padding: 2px 8px;
+            display: inline-block;
+            direction: ltr;
+        }
+
+        .translation {
+            display: block;
+            margin: 10px 0 30px 0;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+            direction: ltr;
+        }
+
+        .btn {
+            background: var(--accent-gold);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mode-toggle {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .note-input {
+            width: 100%;
+            margin-top: 10px;
+            background: rgba(0,0,0,0.05);
+            border: 1px solid var(--accent-gold);
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        /* Адаптив */
+        @media (max-width: 600px) {
+            .quran-text { font-size: 1.8rem; line-height: 2.4; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="app">
-        <main class="main-container" id="router-outlet">
-            </main>
+<div class="main-menu">
+    <h1 style="text-align: center; color: var(--accent-gold);">Al-Quran Premium</h1>
+    <div class="surah-list" id="list"></div>
+</div>
 
-        <nav class="nav-bar" id="nav-bar">
-            </nav>
-    </div>
-
-    <div id="toast" class="toast">Action Successful</div>
-
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal">
-            <h3 id="modal-title">Confirm</h3>
-            <p id="modal-text" style="color: var(--text-sec); margin-top: 8px;">Are you sure?</p>
-            <div class="modal-actions">
-                <button class="btn-primary" style="background: var(--bg); color: var(--text-main)" id="modal-cancel">Cancel</button>
-                <button class="btn-primary" id="modal-confirm">Confirm</button>
-            </div>
+<div id="reader">
+    <div class="reader-controls">
+        <button class="btn" onclick="closeReader()">← Назад</button>
+        <div>
+            <button class="btn mode-toggle" onclick="toggleView()">🖼 Режим: Книга/Перевод</button>
         </div>
     </div>
+    
+    <div class="content-wrapper" id="content">
+        </div>
+</div>
 
-    <script>
-        /**
-         * --------------------------------------------------------------------------
-         * ICON LIBRARY (SVG Strings)
-         * --------------------------------------------------------------------------
-         */
-        const Icons = {
-            reciters: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`,
-            player: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>`,
-            my: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path></svg>`,
-            settings: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`,
-            play: `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
-            pause: `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`,
-            prev: `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>`,
-            next: `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>`,
-            quran: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>`,
-            arrowUp: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>`,
-            arrowDown: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>`,
-            trash: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`
-        };
+<script>
+    let isMushafMode = false;
+    let currentData = null;
 
-        /**
-         * --------------------------------------------------------------------------
-         * UTILS & CONFIG
-         * --------------------------------------------------------------------------
-         */
-        const $ = (sel) => document.querySelector(sel);
-        const $$ = (sel) => document.querySelectorAll(sel);
-        const create = (tag, className, innerHTML = '') => {
-            const el = document.createElement(tag);
-            if (className) el.className = className;
-            if (innerHTML) el.innerHTML = innerHTML;
-            return el;
-        };
+    async function loadList() {
+        const res = await fetch('https://api.alquran.cloud/v1/surah');
+        const data = await res.json();
+        const list = document.getElementById('list');
         
-        const Dict = {
-            en: { reciters: "Reciters", player: "Player", my: "My Tracks", settings: "Settings", search: "Search reciter...", tracks: "Tracks", speed: "Speed", lang: "Language", theme: "Theme", clear: "Clear Data", confirm: "Confirm", cancel: "Cancel", empty: "No tracks available.", load_file: "Load Audio Files" },
-            ru: { reciters: "Чтецы", player: "Плеер", my: "Мои записи", settings: "Настройки", search: "Поиск чтеца...", tracks: "Треки", speed: "Скорость", lang: "Язык", theme: "Тема", clear: "Очистить данные", confirm: "Подтвердить", cancel: "Отмена", empty: "Треков нет.", load_file: "Загрузить файлы" }
-        };
-
-        const AppState = {
-            lang: localStorage.getItem('lang') || 'en',
-            theme: localStorage.getItem('theme') || 'system',
-            queue: [],
-            currentTrackIndex: -1,
-            isPlaying: false,
-            reciters: [
-                { id: 'dosari', name: 'Yasser Al-Dosari', nameRu: 'Ясир ад-Даусари', badge: 'HQ' },
-                { id: 'luhaidan', name: 'Muhammad Al-Luhaidan', nameRu: 'Мухаммад аль-Люхайдан', badge: 'HQ' },
-                { id: 'sudais', name: 'Abdurrahman As-Sudais', nameRu: 'Абдуррахман ас-Судайс', badge: 'HQ' }
-            ],
-            userTracks: [] // populated from IndexedDB
-        };
-
-        const t = (key) => Dict[AppState.lang][key] || key;
-
-        /**
-         * --------------------------------------------------------------------------
-         * SERVICES (DB, AUDIO, API)
-         * --------------------------------------------------------------------------
-         */
-        
-        // --- IndexedDB Wrapper ---
-        const DB = {
-            dbName: 'QuranPWA_DB',
-            version: 1,
-            db: null,
-            async init() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, this.version);
-                    request.onupgradeneeded = (e) => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains('tracks')) {
-                            db.createObjectStore('tracks', { keyPath: 'id' });
-                        }
-                    };
-                    request.onsuccess = (e) => { this.db = e.target.result; resolve(); };
-                    request.onerror = (e) => reject(e);
-                });
-            },
-            async addTrack(track) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction('tracks', 'readwrite');
-                    tx.objectStore('tracks').add(track);
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = () => reject();
-                });
-            },
-            async getAllTracks() {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('tracks', 'readonly');
-                    const req = tx.objectStore('tracks').getAll();
-                    req.onsuccess = () => resolve(req.result);
-                });
-            },
-            async deleteTrack(id) {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('tracks', 'readwrite');
-                    tx.objectStore('tracks').delete(id);
-                    tx.oncomplete = () => resolve();
-                });
-            },
-            async clear() {
-                return new Promise(resolve => {
-                    const tx = this.db.transaction('tracks', 'readwrite');
-                    tx.objectStore('tracks').clear();
-                    tx.oncomplete = resolve;
-                });
-            }
-        };
-
-        // --- Audio Player Engine ---
-        const Player = {
-            audio: new Audio(),
-            init() {
-                this.audio.addEventListener('ended', () => this.next());
-                this.audio.addEventListener('timeupdate', () => UI.updateProgress());
-                this.audio.addEventListener('loadedmetadata', () => UI.updateMeta());
-                this.audio.addEventListener('error', () => UI.toast('Error playing audio', 'error'));
-                
-                // Media Session
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
-                    navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
-                    navigator.mediaSession.setActionHandler('previoustrack', () => this.prev());
-                    navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
-                }
-            },
-            load(track) {
-                // If blob (user file) or URL
-                this.audio.src = track.url;
-                this.audio.playbackRate = localStorage.getItem('speed') || 1;
-                this.audio.play().then(() => {
-                    AppState.isPlaying = true;
-                    UI.updatePlayerState();
-                    UI.updateMediaSession(track);
-                }).catch(e => console.log('Autoplay prevented', e));
-            },
-            togglePlay() {
-                if (this.audio.paused) {
-                    this.audio.play();
-                    AppState.isPlaying = true;
-                } else {
-                    this.audio.pause();
-                    AppState.isPlaying = false;
-                }
-                UI.updatePlayerState();
-            },
-            seek(time) { this.audio.currentTime = time; },
-            next() {
-                if (AppState.currentTrackIndex < AppState.queue.length - 1) {
-                    AppState.currentTrackIndex++;
-                    this.load(AppState.queue[AppState.currentTrackIndex]);
-                    UI.renderQueue(); // Update active state
-                }
-            },
-            prev() {
-                if (this.audio.currentTime > 3) {
-                    this.audio.currentTime = 0;
-                } else if (AppState.currentTrackIndex > 0) {
-                    AppState.currentTrackIndex--;
-                    this.load(AppState.queue[AppState.currentTrackIndex]);
-                    UI.renderQueue();
-                }
-            },
-            setSpeed(rate) {
-                this.audio.playbackRate = rate;
-                localStorage.setItem('speed', rate);
-            }
-        };
-
-        // --- API Mock ---
-        const API = {
-            async getTracks(reciterId) {
-                // Simulating network delay
-                await new Promise(r => setTimeout(r, 600)); 
-                
-                // Fallback Mock Data
-                const base = "https://server8.mp3quran.net/v2"; // Example structure
-                // We'll use a public CDN for demo or fallback to placeholder if offline
-                // For this demo, using some static reliable urls would be better, but request asked for abstract endpoint logic.
-                // I will generate mock data with dummy URLs to demonstrate UI.
-                
-                const surahs = ["Al-Fatiha", "Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Ma'idah"];
-                return surahs.map((s, i) => ({
-                    id: `${reciterId}_${i}`,
-                    title: `${i+1}. ${s}`,
-                    reciter: reciterId,
-                    // Note: These URLs are placeholders. In a real app, use valid MP3 endpoints.
-                    // For the sake of the "WOW" demo working without CORS issues on a copy-paste,
-                    // I'll try to use a generic reliable sound or handle the error gracefully.
-                    url: `https://server11.mp3quran.net/yasser/${String(i+1).padStart(3, '0')}.mp3`, 
-                    duration: 0
-                }));
-            }
-        };
-
-        /**
-         * --------------------------------------------------------------------------
-         * UI RENDERER & LOGIC
-         * --------------------------------------------------------------------------
-         */
-        const UI = {
-            init() {
-                this.renderNav();
-                this.applyTheme();
-                
-                // Global event listeners
-                window.addEventListener('hashchange', () => this.router());
-                this.router(); // Initial load
-            },
-
-            applyTheme() {
-                const isDark = AppState.theme === 'dark' || (AppState.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            },
-
-            toast(msg) {
-                const el = $('#toast');
-                el.textContent = msg;
-                el.classList.add('show');
-                setTimeout(() => el.classList.remove('show'), 3000);
-            },
-
-            modal(title, text, onConfirm) {
-                $('#modal-title').textContent = title;
-                $('#modal-text').textContent = text;
-                $('#modal-overlay').classList.add('open');
-                
-                const confirmBtn = $('#modal-confirm');
-                const cancelBtn = $('#modal-cancel');
-                
-                const close = () => {
-                    $('#modal-overlay').classList.remove('open');
-                    confirmBtn.onclick = null;
-                };
-
-                confirmBtn.onclick = () => { onConfirm(); close(); };
-                cancelBtn.onclick = close;
-            },
-
-            router() {
-                const hash = window.location.hash || '#reciters';
-                const main = $('#router-outlet');
-                main.innerHTML = '';
-                
-                // Update Nav Active State
-                $$('.nav-item').forEach(el => el.classList.remove('active'));
-                const activeNav = $(`a[href="${hash}"]`);
-                if(activeNav) activeNav.classList.add('active');
-
-                switch(hash) {
-                    case '#reciters': this.viewReciters(main); break;
-                    case '#player': this.viewPlayer(main); break;
-                    case '#my': this.viewMyTracks(main); break;
-                    case '#settings': this.viewSettings(main); break;
-                    default: this.viewReciters(main);
-                }
-            },
-
-            renderNav() {
-                const nav = $('#nav-bar');
-                const items = [
-                    { id: 'reciters', icon: Icons.reciters, label: t('reciters') },
-                    { id: 'player', icon: Icons.player, label: t('player') },
-                    { id: 'my', icon: Icons.my, label: t('my') },
-                    { id: 'settings', icon: Icons.settings, label: t('settings') }
-                ];
-                
-                nav.innerHTML = items.map(item => `
-                    <a href="#${item.id}" class="nav-item">
-                        <div class="nav-icon">${item.icon}</div>
-                        <span class="nav-label">${item.label}</span>
-                    </a>
-                `).join('');
-            },
-
-            // --- Views ---
-
-            viewReciters(container) {
-                container.innerHTML = `
-                    <div class="fade-in">
-                        <h1>${t('reciters')}</h1>
-                        <input type="text" class="search-bar" placeholder="${t('search')}" id="search-input">
-                        <div class="reciter-grid" id="reciter-grid"></div>
+        data.data.forEach(s => {
+            list.innerHTML += `
+                <div class="surah-item" onclick="loadSurah(${s.number})">
+                    <div>
+                        <div style="font-weight:bold">${s.number}. ${s.englishName}</div>
+                        <div style="font-size:0.8rem; opacity:0.6">${s.englishNameTranslation}</div>
                     </div>
-                `;
-
-                const renderList = (filter = '') => {
-                    const grid = $('#reciter-grid');
-                    grid.innerHTML = AppState.reciters
-                        .filter(r => (AppState.lang === 'ru' ? r.nameRu : r.name).toLowerCase().includes(filter.toLowerCase()))
-                        .map(r => `
-                            <div class="reciter-card" onclick="App.loadReciter('${r.id}')">
-                                <span class="badge">${r.badge}</span>
-                                <div class="avatar">${Icons.quran}</div>
-                                <h3>${AppState.lang === 'ru' ? r.nameRu : r.name}</h3>
-                            </div>
-                        `).join('');
-                };
-                
-                renderList();
-                $('#search-input').addEventListener('input', (e) => renderList(e.target.value));
-            },
-
-            async viewPlayer(container) {
-                container.innerHTML = `
-                    <div class="player-container fade-in">
-                        <div class="player-art">${Icons.quran}</div>
-                        <h2 id="track-title">Select a Surah</h2>
-                        <p id="track-reciter" style="color: var(--text-sec); margin-bottom: 20px;">--</p>
-                        
-                        <div class="progress-container">
-                            <div class="progress-bar" id="prog-bar">
-                                <div class="progress-fill" id="prog-fill"></div>
-                            </div>
-                            <div class="time-labels">
-                                <span id="time-curr">0:00</span>
-                                <span id="time-total">0:00</span>
-                            </div>
-                        </div>
-
-                        <div class="controls-main">
-                            <button class="btn-icon" onclick="Player.prev()">${Icons.prev}</button>
-                            <button class="btn-play-large" id="play-btn" onclick="Player.togglePlay()">${Icons.play}</button>
-                            <button class="btn-icon" onclick="Player.next()">${Icons.next}</button>
-                        </div>
-                        
-                        <div class="controls-sec">
-                            <button class="btn-icon" onclick="UI.toggleSpeed()" title="${t('speed')}">1x</button>
-                        </div>
-
-                        <div class="glass-panel" style="padding: 10px; max-height: 300px; overflow-y: auto;">
-                            <h3 style="text-align:left; padding: 10px;">${t('tracks')}</h3>
-                            <div id="playlist-container" class="track-list"></div>
-                        </div>
-                    </div>
-                `;
-                
-                // Add seek listener
-                $('#prog-bar').addEventListener('click', (e) => {
-                    const rect = e.target.getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    if(Player.audio.duration) Player.seek(Player.audio.duration * percent);
-                });
-
-                this.renderQueue();
-                this.updatePlayerState();
-            },
-
-            async viewMyTracks(container) {
-                const tracks = await DB.getAllTracks();
-                AppState.userTracks = tracks;
-                
-                container.innerHTML = `
-                    <div class="fade-in">
-                        <h1>${t('my')}</h1>
-                        <div style="margin-bottom: 20px;">
-                            <input type="file" id="file-upload" accept="audio/*" multiple style="display: none">
-                            <button class="btn-primary" onclick="$('#file-upload').click()">${t('load_file')}</button>
-                        </div>
-                        <div class="glass-panel" style="padding: 0;">
-                            ${tracks.length === 0 ? `<div style="padding:20px; text-align:center">${t('empty')}</div>` : ''}
-                            <div class="track-list">
-                                ${tracks.map((t, i) => `
-                                    <div class="track-item">
-                                        <div class="btn-icon" onclick="App.playUserTrack(${i})">${Icons.play}</div>
-                                        <div class="track-info">
-                                            <div>${t.title}</div>
-                                            <small>${(t.size / 1024 / 1024).toFixed(2)} MB</small>
-                                        </div>
-                                        <button class="btn-icon" onclick="App.deleteUserTrack(${t.id})" style="color: #ef4444">${Icons.trash}</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                $('#file-upload').onchange = async (e) => {
-                    const files = Array.from(e.target.files);
-                    for (const file of files) {
-                        const track = {
-                            id: Date.now() + Math.random(),
-                            title: file.name,
-                            blob: file,
-                            size: file.size
-                        };
-                        await DB.addTrack(track);
-                    }
-                    this.viewMyTracks(container); // Refresh
-                    this.toast('Files added');
-                };
-            },
-
-            viewSettings(container) {
-                container.innerHTML = `
-                    <div class="fade-in">
-                        <h1>${t('settings')}</h1>
-                        
-                        <div class="settings-group">
-                            <div class="settings-row">
-                                <span>${t('theme')}</span>
-                                <select onchange="App.setTheme(this.value)">
-                                    <option value="system" ${AppState.theme==='system'?'selected':''}>System</option>
-                                    <option value="light" ${AppState.theme==='light'?'selected':''}>Light</option>
-                                    <option value="dark" ${AppState.theme==='dark'?'selected':''}>Dark</option>
-                                </select>
-                            </div>
-                            <div class="settings-row">
-                                <span>${t('lang')}</span>
-                                <select onchange="App.setLang(this.value)">
-                                    <option value="en" ${AppState.lang==='en'?'selected':''}>English</option>
-                                    <option value="ru" ${AppState.lang==='ru'?'selected':''}>Русский</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
-                            <button class="btn-primary" style="width:100%; background: #ef4444;" onclick="App.clearData()">
-                                ${t('clear')}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            },
-
-            // --- Player UI Updates ---
-            renderQueue() {
-                const list = $('#playlist-container');
-                if(!list) return;
-                
-                if (AppState.queue.length === 0) {
-                    list.innerHTML = `<div style="padding:10px">${t('empty')}</div>`;
-                    return;
-                }
-
-                list.innerHTML = AppState.queue.map((track, i) => `
-                    <div class="track-item ${i === AppState.currentTrackIndex ? 'active' : ''}">
-                        <div style="width: 20px; font-size:12px; opacity:0.7">${i+1}</div>
-                        <div class="track-info" onclick="App.playQueueIndex(${i})">${track.title}</div>
-                        <div>
-                             <button onclick="App.reorder(${i}, -1)">${Icons.arrowUp}</button>
-                             <button onclick="App.reorder(${i}, 1)">${Icons.arrowDown}</button>
-                        </div>
-                    </div>
-                `).join('');
-
-                if (AppState.currentTrackIndex >= 0 && AppState.queue[AppState.currentTrackIndex]) {
-                    $('#track-title').textContent = AppState.queue[AppState.currentTrackIndex].title;
-                }
-            },
-
-            updatePlayerState() {
-                const btn = $('#play-btn');
-                if(btn) btn.innerHTML = AppState.isPlaying ? Icons.pause : Icons.play;
-            },
-
-            updateProgress() {
-                const audio = Player.audio;
-                if (!audio.duration) return;
-                const pct = (audio.currentTime / audio.duration) * 100;
-                
-                const fill = $('#prog-fill');
-                const curr = $('#time-curr');
-                const total = $('#time-total');
-                
-                if(fill) fill.style.width = `${pct}%`;
-                if(curr) curr.textContent = this.fmtTime(audio.currentTime);
-                if(total) total.textContent = this.fmtTime(audio.duration);
-            },
-
-            updateMeta() {
-                const audio = Player.audio;
-                const total = $('#time-total');
-                if(total && audio.duration) total.textContent = this.fmtTime(audio.duration);
-            },
-            
-            updateMediaSession(track) {
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title: track.title,
-                        artist: "Quran Recitation",
-                        album: "Quran PWA",
-                        artwork: [{ src: 'https://via.placeholder.com/512.png?text=Quran', sizes: '512x512', type: 'image/png' }]
-                    });
-                }
-            },
-
-            toggleSpeed() {
-                const speeds = [0.75, 1, 1.25, 1.5];
-                let cur = Player.audio.playbackRate;
-                let nextIdx = speeds.indexOf(cur) + 1;
-                if(nextIdx >= speeds.length) nextIdx = 0;
-                Player.setSpeed(speeds[nextIdx]);
-                this.toast(`Speed: ${speeds[nextIdx]}x`);
-            },
-
-            fmtTime(s) {
-                const min = Math.floor(s / 60);
-                const sec = Math.floor(s % 60);
-                return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-            }
-        };
-
-        /**
-         * --------------------------------------------------------------------------
-         * APP CONTROLLER
-         * --------------------------------------------------------------------------
-         */
-        const App = {
-            async init() {
-                await DB.init();
-                Player.init();
-                UI.init();
-                this.registerSW();
-            },
-
-            async loadReciter(id) {
-                UI.toast('Loading tracks...');
-                try {
-                    const tracks = await API.getTracks(id);
-                    AppState.queue = tracks;
-                    AppState.currentTrackIndex = 0;
-                    window.location.hash = '#player';
-                    Player.load(AppState.queue[0]);
-                } catch(e) {
-                    UI.toast('Error loading tracks');
-                }
-            },
-
-            async playUserTrack(index) {
-                const t = AppState.userTracks[index];
-                const blobUrl = URL.createObjectURL(t.blob);
-                AppState.queue = AppState.userTracks.map(ut => ({
-                    title: ut.title,
-                    url: URL.createObjectURL(ut.blob), // Note: Keeping persistent URLs for blobs is tricky, simplified here
-                    reciter: 'My Files'
-                }));
-                AppState.currentTrackIndex = index;
-                window.location.hash = '#player';
-                Player.load(AppState.queue[index]);
-            },
-            
-            async deleteUserTrack(id) {
-                UI.modal(t('confirm'), 'Delete this track?', async () => {
-                    await DB.deleteTrack(id);
-                    // Refresh view if currently on My Tracks
-                    if(window.location.hash === '#my') {
-                        const main = $('#router-outlet');
-                        UI.viewMyTracks(main);
-                    }
-                });
-            },
-
-            playQueueIndex(index) {
-                AppState.currentTrackIndex = index;
-                Player.load(AppState.queue[index]);
-            },
-
-            reorder(index, dir) {
-                const newIndex = index + dir;
-                if (newIndex < 0 || newIndex >= AppState.queue.length) return;
-                
-                // Swap
-                const temp = AppState.queue[index];
-                AppState.queue[index] = AppState.queue[newIndex];
-                AppState.queue[newIndex] = temp;
-                
-                // Adjust playing index if needed
-                if(AppState.currentTrackIndex === index) AppState.currentTrackIndex = newIndex;
-                else if(AppState.currentTrackIndex === newIndex) AppState.currentTrackIndex = index;
-                
-                UI.renderQueue();
-            },
-
-            setTheme(val) {
-                AppState.theme = val;
-                localStorage.setItem('theme', val);
-                UI.applyTheme();
-            },
-
-            setLang(val) {
-                AppState.lang = val;
-                localStorage.setItem('lang', val);
-                location.reload(); // Simple reload to apply strings
-            },
-            
-            clearData() {
-                UI.modal(t('confirm'), t('clear') + '?', async () => {
-                    await DB.clear();
-                    localStorage.clear();
-                    location.reload();
-                });
-            },
-
-            registerSW() {
-                // Inline SW logic for single file PWA demo
-                const swCode = `
-                    const CACHE_NAME = 'quran-v1';
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                    self.addEventListener('fetch', e => {
-                        e.respondWith(
-                            caches.match(e.request).then(res => res || fetch(e.request))
-                        );
-                    });
-                `;
-                // Try to register via Blob (Browser policies may vary on this, strictly speaking needs separate file)
-                try {
-                    const blob = new Blob([swCode], {type: 'application/javascript'});
-                    const url = URL.createObjectURL(blob);
-                    // Note: Service Worker registration often fails from Blob URI due to security scope.
-                    // In a real environment, save swCode to sw.js and use navigator.serviceWorker.register('sw.js')
-                    // For this purely client-side single-file demo, we skip actual SW reg if Blob fails, 
-                    // relying on browser cache headers for online files.
-                    // navigator.serviceWorker.register(url).catch(e => console.log('SW Blob Init Failed (Expected in some envs)'));
-                } catch(e) {}
-            }
-        };
-
-        // Bootstrap
-        document.addEventListener('DOMContentLoaded', () => App.init());
-
-        // Install Prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Potentially show an "Install App" button in Settings or Nav
+                    <div style="font-family:'Amiri'; font-size:1.4rem; color:var(--accent-gold)">${s.name}</div>
+                </div>
+            `;
         });
+    }
 
-    </script>
+    async function loadSurah(num) {
+        document.getElementById('reader').style.display = 'block';
+        document.getElementById('content').innerHTML = "Загрузка священных текстов...";
+        
+        // Загружаем сразу арабский, перевод и аудио
+        const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,ru.kuliev,ar.alafasy`);
+        const json = await res.json();
+        currentData = json.data;
+        renderSurah();
+    }
+
+    function renderSurah() {
+        const content = document.getElementById('content');
+        const ar = currentData[0].ayahs;
+        const ru = currentData[1].ayahs;
+        const audio = currentData[2].ayahs;
+
+        let html = `<h1 style="font-family:'Amiri'; color:var(--accent-gold); font-size: 3rem; margin-bottom:40px;">${currentData[0].name}</h1>`;
+        
+        if (isMushafMode) {
+            html += `<div class="quran-text">`;
+            ar.forEach((ayah, i) => {
+                html += `${ayah.text} <span class="ayah-num">${ayah.numberInSurah}</span> `;
+            });
+            html += `</div>`;
+        } else {
+            ar.forEach((ayah, i) => {
+                const savedNote = localStorage.getItem(`n_${currentData[0].number}_${ayah.numberInSurah}`) || '';
+                html += `
+                    <div class="ayah-container" style="margin-bottom: 50px; text-align: right;">
+                        <div class="quran-text">${ayah.text} <span class="ayah-num">${ayah.numberInSurah}</span></div>
+                        <div class="translation">${ru[i].text}</div>
+                        <div style="text-align:left; display:flex; gap:10px;">
+                            <button class="btn" style="padding:5px 10px; font-size:0.7rem;" onclick="new Audio('${audio[i].audio}').play()">▶ Слушать</button>
+                            <button class="btn mode-toggle" style="padding:5px 10px; font-size:0.7rem;" onclick="toggleNote(${ayah.numberInSurah})">📝 Заметка</button>
+                        </div>
+                        <textarea id="note-${ayah.numberInSurah}" class="note-input" 
+                            onblur="saveNote(${currentData[0].number}, ${ayah.numberInSurah}, this.value)"
+                            style="${savedNote ? 'display:block' : ''}">${savedNote}</textarea>
+                    </div>
+                `;
+            });
+        }
+        content.innerHTML = html;
+        
+        // Сохраняем прогресс (последняя сура)
+        localStorage.setItem('last_surah', currentData[0].number);
+    }
+
+    function toggleView() {
+        isMushafMode = !isMushafMode;
+        const reader = document.getElementById('reader');
+        if(isMushafMode) reader.classList.add('mushaf-view');
+        else reader.classList.remove('mushaf-view');
+        renderSurah();
+    }
+
+    function toggleNote(id) {
+        const el = document.getElementById(`note-${id}`);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveNote(s, a, val) {
+        localStorage.setItem(`n_${s}_${a}`, val);
+    }
+
+    function closeReader() {
+        document.getElementById('reader').style.display = 'none';
+        currentData = null;
+    }
+
+    window.onload = loadList;
+</script>
 </body>
 </html>
